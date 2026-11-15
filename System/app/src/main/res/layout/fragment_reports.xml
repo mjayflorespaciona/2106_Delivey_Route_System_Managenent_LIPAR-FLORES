@@ -24,7 +24,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Reports &amp; Analytics"
+                android:text="Delivery Reports &amp; Analytics"
                 android:textColor="#111111"
                 android:textSize="18sp"
                 android:textStyle="bold" />
@@ -32,7 +32,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Performance overview &amp; statistics"
+                android:text="Official RoutGo Audit &amp; Performance"
                 android:textColor="#666666"
                 android:textSize="12sp" />
         </LinearLayout>
@@ -42,12 +42,34 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:background="#E0F2FE"
+            android:clickable="true"
+            android:focusable="true"
             android:paddingHorizontal="12dp"
             android:paddingVertical="6dp"
-            android:text="This Week ▾"
+            android:text="All Time ▾"
             android:textColor="#0284C7"
             android:textSize="12sp"
             android:textStyle="bold" />
+    </LinearLayout>
+
+    <!-- Search by Tracking ID Bar -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginTop="12dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <EditText
+            android:id="@+id/searchReportIdField"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@android:drawable/editbox_background_normal"
+            android:hint="Search report by Tracking ID (e.g. DLV-1001)..."
+            android:inputType="textCapCharacters"
+            android:paddingHorizontal="12dp"
+            android:textSize="13sp" />
     </LinearLayout>
 
     <!-- Scrollable Content -->
@@ -58,12 +80,13 @@
         android:fillViewport="true">
 
         <LinearLayout
+            android:id="@+id/reportsPrintContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:padding="16dp">
 
-            <!-- Summary Cards Row 1 -->
+            <!-- Summary Cards Row 1: Total, Completed, Pending -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -72,136 +95,217 @@
 
                 <LinearLayout
                     android:layout_width="0dp"
-                    android:layout_height="90dp"
-                    android:layout_marginEnd="8dp"
+                    android:layout_height="80dp"
+                    android:layout_marginEnd="4dp"
                     android:layout_weight="1"
                     android:background="@android:drawable/dialog_holo_light_frame"
                     android:gravity="center"
                     android:orientation="vertical"
-                    android:padding="8dp">
+                    android:padding="6dp">
 
                     <TextView
+                        android:id="@+id/tvTotalRequests"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="148"
+                        android:text="0"
                         android:textColor="#0B4F2C"
-                        android:textSize="22sp"
+                        android:textSize="20sp"
                         android:textStyle="bold" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
-                        android:text="Total Deliveries"
+                        android:text="Total Requests"
                         android:textColor="#666666"
-                        android:textSize="12sp" />
+                        android:textSize="11sp" />
                 </LinearLayout>
 
                 <LinearLayout
                     android:layout_width="0dp"
-                    android:layout_height="90dp"
-                    android:layout_marginStart="8dp"
+                    android:layout_height="80dp"
+                    android:layout_marginHorizontal="2dp"
                     android:layout_weight="1"
                     android:background="@android:drawable/dialog_holo_light_frame"
                     android:gravity="center"
                     android:orientation="vertical"
-                    android:padding="8dp">
+                    android:padding="6dp">
 
                     <TextView
+                        android:id="@+id/tvCompletedDeliveries"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="94.6%"
+                        android:text="0"
                         android:textColor="#16A34A"
-                        android:textSize="22sp"
+                        android:textSize="20sp"
                         android:textStyle="bold" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
-                        android:text="Success Rate"
+                        android:text="Completed"
                         android:textColor="#666666"
-                        android:textSize="12sp" />
+                        android:textSize="11sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="80dp"
+                    android:layout_marginStart="4dp"
+                    android:layout_weight="1"
+                    android:background="@android:drawable/dialog_holo_light_frame"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="6dp">
+
+                    <TextView
+                        android:id="@+id/tvPendingDeliveries"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="0"
+                        android:textColor="#D97706"
+                        android:textSize="20sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Pending"
+                        android:textColor="#666666"
+                        android:textSize="11sp" />
                 </LinearLayout>
             </LinearLayout>
 
-            <!-- Summary Cards Row 2 -->
+            <!-- Summary Cards Row 2: Failed, Cancelled, Rider Assignments, Vehicle Usage -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
+                android:layout_marginTop="8dp"
                 android:baselineAligned="false"
                 android:orientation="horizontal">
 
                 <LinearLayout
                     android:layout_width="0dp"
-                    android:layout_height="90dp"
-                    android:layout_marginEnd="8dp"
+                    android:layout_height="80dp"
+                    android:layout_marginEnd="4dp"
                     android:layout_weight="1"
                     android:background="@android:drawable/dialog_holo_light_frame"
                     android:gravity="center"
                     android:orientation="vertical"
-                    android:padding="8dp">
+                    android:padding="6dp">
 
                     <TextView
+                        android:id="@+id/tvFailedDeliveries"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="38 min"
-                        android:textColor="#D97706"
-                        android:textSize="22sp"
+                        android:text="0"
+                        android:textColor="#DC2626"
+                        android:textSize="20sp"
                         android:textStyle="bold" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
-                        android:text="Avg Travel Time"
+                        android:text="Failed"
                         android:textColor="#666666"
-                        android:textSize="12sp" />
+                        android:textSize="11sp" />
                 </LinearLayout>
 
                 <LinearLayout
                     android:layout_width="0dp"
-                    android:layout_height="90dp"
-                    android:layout_marginStart="8dp"
+                    android:layout_height="80dp"
+                    android:layout_marginHorizontal="2dp"
                     android:layout_weight="1"
                     android:background="@android:drawable/dialog_holo_light_frame"
                     android:gravity="center"
                     android:orientation="vertical"
-                    android:padding="8dp">
+                    android:padding="6dp">
 
                     <TextView
+                        android:id="@+id/tvCancelledDeliveries"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="12 / 15"
-                        android:textColor="#0284C7"
-                        android:textSize="22sp"
+                        android:text="0"
+                        android:textColor="#64748B"
+                        android:textSize="20sp"
                         android:textStyle="bold" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
-                        android:text="Active Riders"
+                        android:text="Cancelled"
                         android:textColor="#666666"
-                        android:textSize="12sp" />
+                        android:textSize="11sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="80dp"
+                    android:layout_marginHorizontal="2dp"
+                    android:layout_weight="1"
+                    android:background="@android:drawable/dialog_holo_light_frame"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="6dp">
+
+                    <TextView
+                        android:id="@+id/tvRiderAssignments"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="0"
+                        android:textColor="#7B1FA2"
+                        android:textSize="20sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Rider Jobs"
+                        android:textColor="#666666"
+                        android:textSize="11sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="80dp"
+                    android:layout_marginStart="4dp"
+                    android:layout_weight="1"
+                    android:background="@android:drawable/dialog_holo_light_frame"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="6dp">
+
+                    <TextView
+                        android:id="@+id/tvVehicleUsage"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="0"
+                        android:textColor="#0284C7"
+                        android:textSize="20sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Vehicles In Use"
+                        android:textColor="#666666"
+                        android:textSize="11sp" />
                 </LinearLayout>
             </LinearLayout>
 
-            <!-- Delivery Status Breakdown Section -->
+            <!-- Delivery Status Breakdown Section (Simple Visual Charts) -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
-                android:text="Delivery Status Breakdown"
+                android:layout_marginTop="20dp"
+                android:text="Delivery Status Summary"
                 android:textColor="#111111"
-                android:textSize="16sp"
+                android:textSize="15sp"
                 android:textStyle="bold" />
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
+                android:layout_marginTop="8dp"
                 android:background="@android:drawable/dialog_holo_light_frame"
                 android:orientation="vertical"
                 android:padding="16dp">
@@ -215,14 +319,15 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="Delivered"
+                        android:text="Completed &amp; Delivered"
                         android:textColor="#333333"
                         android:textStyle="bold" />
 
                     <TextView
+                        android:id="@+id/tvDeliveredPercent"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="135 (91%)"
+                        android:text="0 (0%)"
                         android:textColor="#16A34A"
                         android:textStyle="bold" />
                 </LinearLayout>
@@ -230,27 +335,28 @@
                 <View
                     android:layout_width="match_parent"
                     android:layout_height="8dp"
-                    android:layout_marginTop="6dp"
+                    android:layout_marginTop="4dp"
                     android:background="#DCFCE7" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
+                    android:layout_marginTop="10dp"
                     android:orientation="horizontal">
 
                     <TextView
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="In Transit"
+                        android:text="Active &amp; In Transit"
                         android:textColor="#333333"
                         android:textStyle="bold" />
 
                     <TextView
+                        android:id="@+id/tvInTransitPercent"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="10 (7%)"
+                        android:text="0 (0%)"
                         android:textColor="#0284C7"
                         android:textStyle="bold" />
                 </LinearLayout>
@@ -258,27 +364,28 @@
                 <View
                     android:layout_width="match_parent"
                     android:layout_height="8dp"
-                    android:layout_marginTop="6dp"
+                    android:layout_marginTop="4dp"
                     android:background="#E0F2FE" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
+                    android:layout_marginTop="10dp"
                     android:orientation="horizontal">
 
                     <TextView
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="Cancelled / Issues"
+                        android:text="Failed / Cancelled / Issues"
                         android:textColor="#333333"
                         android:textStyle="bold" />
 
                     <TextView
+                        android:id="@+id/tvIssuesPercent"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="3 (2%)"
+                        android:text="0 (0%)"
                         android:textColor="#DC2626"
                         android:textStyle="bold" />
                 </LinearLayout>
@@ -286,136 +393,59 @@
                 <View
                     android:layout_width="match_parent"
                     android:layout_height="8dp"
-                    android:layout_marginTop="6dp"
+                    android:layout_marginTop="4dp"
                     android:background="#FEE2E2" />
             </LinearLayout>
 
-            <!-- Generated Reports List -->
+            <!-- Delivery Records List Header -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
-                android:text="Available Reports"
-                android:textColor="#111111"
-                android:textSize="16sp"
-                android:textStyle="bold" />
-
-            <!-- Report Item 1 -->
-            <LinearLayout
-                android:id="@+id/reportWeekly"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:background="@android:drawable/dialog_holo_light_frame"
-                android:clickable="true"
-                android:focusable="true"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:padding="12dp">
-
-                <TextView
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:background="#E8F5E9"
-                    android:gravity="center"
-                    android:text="📊"
-                    android:textSize="20sp" />
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="12dp"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Weekly Performance Summary"
-                        android:textColor="#111111"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Nov 06 - Nov 12, 2024 • PDF"
-                        android:textColor="#666666"
-                        android:textSize="12sp" />
-                </LinearLayout>
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Download ↓"
-                    android:textColor="#0B4F2C"
-                    android:textStyle="bold" />
-            </LinearLayout>
-
-            <!-- Report Item 2 -->
-            <LinearLayout
-                android:id="@+id/reportRider"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:background="@android:drawable/dialog_holo_light_frame"
-                android:clickable="true"
-                android:focusable="true"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:padding="12dp">
-
-                <TextView
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:background="#E8F5E9"
-                    android:gravity="center"
-                    android:text="👤"
-                    android:textSize="20sp" />
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="12dp"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Rider Efficiency Audit"
-                        android:textColor="#111111"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Generated Today • CSV"
-                        android:textColor="#666666"
-                        android:textSize="12sp" />
-                </LinearLayout>
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Download ↓"
-                    android:textColor="#0B4F2C"
-                    android:textStyle="bold" />
-            </LinearLayout>
-
-            <!-- Export Button -->
-            <Button
-                android:id="@+id/btnExportReport"
-                android:layout_width="match_parent"
-                android:layout_height="48dp"
                 android:layout_marginTop="20dp"
-                android:layout_marginBottom="16dp"
-                android:backgroundTint="#0B4F2C"
-                android:text="Export Complete Analytics Report"
-                android:textColor="#FFFFFF"
+                android:text="Delivery Records Audit Log"
+                android:textColor="#111111"
+                android:textSize="15sp"
                 android:textStyle="bold" />
+
+            <LinearLayout
+                android:id="@+id/containerDateRecords"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:orientation="vertical" />
+
+            <!-- Export Buttons -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:layout_marginBottom="24dp"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/btnExportPdf"
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
+                    android:layout_marginEnd="4dp"
+                    android:layout_weight="1"
+                    android:backgroundTint="#0B4F2C"
+                    android:text="📄 Export PDF"
+                    android:textColor="#FFFFFF"
+                    android:textStyle="bold" />
+
+                <Button
+                    android:id="@+id/btnExportCsv"
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
+                    android:layout_marginStart="4dp"
+                    android:layout_weight="1"
+                    android:backgroundTint="#0284C7"
+                    android:text="📊 Export CSV"
+                    android:textColor="#FFFFFF"
+                    android:textStyle="bold" />
+            </LinearLayout>
 
         </LinearLayout>
     </ScrollView>
 
 </LinearLayout>
-

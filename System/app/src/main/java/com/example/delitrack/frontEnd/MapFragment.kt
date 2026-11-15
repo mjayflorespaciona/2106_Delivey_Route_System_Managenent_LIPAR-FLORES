@@ -70,6 +70,13 @@ class MapFragment : Fragment() {
         mapView.setTileSource(TileSourceFactory.MAPNIK)
         mapView.setMultiTouchControls(true)
 
+        // Show Share GPS Location button ONLY when viewed on Rider Dashboard
+        if (activity is RiderDashboardActivity) {
+            btnShareGpsLocation.visibility = View.VISIBLE
+        } else {
+            btnShareGpsLocation.visibility = View.GONE
+        }
+
         setupRouteMap()
         loadDeliveryMarkersFromFirestore()
 

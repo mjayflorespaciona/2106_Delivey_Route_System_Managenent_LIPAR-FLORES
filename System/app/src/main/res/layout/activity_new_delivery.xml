@@ -456,26 +456,6 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
-                android:text="Package Dimensions (L × W × H cm)"
-                android:textColor="#333333"
-                android:textSize="13sp"
-                android:textStyle="bold" />
-
-            <EditText
-                android:id="@+id/packageDimensionsField"
-                android:layout_width="match_parent"
-                android:layout_height="48dp"
-                android:layout_marginTop="4dp"
-                android:background="@android:drawable/editbox_background_normal"
-                android:hint="e.g. 30 × 20 × 15 cm"
-                android:inputType="text"
-                android:paddingHorizontal="12dp"
-                android:textSize="14sp" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
                 android:text="Special Handling Instructions"
                 android:textColor="#333333"
                 android:textSize="13sp"

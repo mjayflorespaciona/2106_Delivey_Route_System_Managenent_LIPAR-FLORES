@@ -24,6 +24,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.example.delitrack.R
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import java.io.FileOutputStream
 
@@ -119,6 +120,24 @@ class DeliveryReceiptActivity : AppCompatActivity() {
             .addOnSuccessListener { doc ->
                 if (doc != null && doc.exists()) {
                     val data = doc.data ?: return@addOnSuccessListener
+
+                    val currentUser = FirebaseAuth.getInstance().currentUser
+                    val userId = currentUser?.uid ?: ""
+                    val userEmail = currentUser?.email ?: ""
+                    val custId = data["customerId"] as? String ?: ""
+                    val custEmail = data["customerEmail"] as? String ?: ""
+
+                    // Security Guard: Private Record Privacy Check
+                    val isOwner = (custId.isEmpty() && userEmail == "admin@delitrack.com") ||
+                            (custId == userId) ||
+                            (userEmail.isNotEmpty() && custEmail.equals(userEmail, ignoreCase = true)) ||
+                            (userEmail == "admin@delitrack.com")
+
+                    if (!isOwner) {
+                        Toast.makeText(this, "Access Denied: You can only view your own receipts.", Toast.LENGTH_LONG).show()
+                        finish()
+                        return@addOnSuccessListener
+                    }
 
                     val status = data["status"] as? String ?: "Pending"
                     val senderName = data["senderName"] as? String ?: data["customerName"] as? String ?: "N/A"

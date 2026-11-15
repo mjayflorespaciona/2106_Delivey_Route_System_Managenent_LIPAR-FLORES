@@ -187,8 +187,12 @@ class HomeFragment : Fragment() {
 
                             cardView.findViewById<TextView>(R.id.tvReceiverName)?.text = "Receiver: $receiver"
                             cardView.findViewById<TextView>(R.id.tvPickupLocation)?.text = "Pickup: $pickup"
-                            cardView.findViewById<TextView>(R.id.tvDeliveryDestination)?.text = "Destination: $dest"
+                            cardView.findViewById<TextView>(R.id.tvDeliveryDestination)?.text = "Delivery Destination: $dest"
                             cardView.findViewById<TextView>(R.id.tvDeliveryDate)?.text = "Date Created: $date"
+
+                            // Ensure Rider/Admin Action bars are completely hidden on Customer Dashboard
+                            cardView.findViewById<LinearLayout>(R.id.riderActionsLayout)?.visibility = View.GONE
+                            cardView.findViewById<LinearLayout>(R.id.adminActionsLayout)?.visibility = View.GONE
 
                             cardView.setOnClickListener {
                                 val intent = Intent(requireContext(), DeliveryTrackingActivity::class.java)

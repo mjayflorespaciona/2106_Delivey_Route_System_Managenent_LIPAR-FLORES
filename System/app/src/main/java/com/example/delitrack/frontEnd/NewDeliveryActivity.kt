@@ -40,6 +40,25 @@ class NewDeliveryActivity : AppCompatActivity() {
         val pickupBarangayField = findViewById<EditText>(R.id.pickupBarangayField)
         val pickupMunicipalityField = findViewById<EditText>(R.id.pickupMunicipalityField)
 
+        // Auto-fill Sender Name and Sender Contact Number from authenticated Customer profile
+        val currentUser = FirebaseAuth.getInstance().currentUser
+        if (currentUser != null) {
+            FirebaseFirestore.getInstance().collection("users").document(currentUser.uid)
+                .get()
+                .addOnSuccessListener { doc ->
+                    if (!isFinishing && doc != null && doc.exists()) {
+                        val name = doc.getString("fullName") ?: ""
+                        val phone = doc.getString("phone") ?: doc.getString("contactNumber") ?: ""
+                        if (name.isNotEmpty() && senderNameField.text.isEmpty()) {
+                            senderNameField.setText(name)
+                        }
+                        if (phone.isNotEmpty() && senderContactField.text.isEmpty()) {
+                            senderContactField.setText(phone)
+                        }
+                    }
+                }
+        }
+
         // Receiver Fields
         val receiverNameField = findViewById<EditText>(R.id.receiverNameField)
         val receiverContactField = findViewById<EditText>(R.id.receiverContactField)
@@ -54,7 +73,6 @@ class NewDeliveryActivity : AppCompatActivity() {
         val radioBulky = findViewById<RadioButton>(R.id.radioBulky)
         val packageWeightField = findViewById<EditText>(R.id.packageWeightField)
         val numberOfPackagesField = findViewById<EditText>(R.id.numberOfPackagesField)
-        val packageDimensionsField = findViewById<EditText>(R.id.packageDimensionsField)
         val specialHandlingField = findViewById<EditText>(R.id.specialHandlingField)
 
         val btnCreateDelivery = findViewById<Button>(R.id.btnCreateDelivery)
@@ -87,7 +105,6 @@ class NewDeliveryActivity : AppCompatActivity() {
             }
             val weightStr = packageWeightField.text.toString().trim()
             val numPackagesStr = numberOfPackagesField.text.toString().trim()
-            val dimensions = packageDimensionsField.text.toString().trim()
             val specialHandling = specialHandlingField.text.toString().trim()
 
             // Field Validation
@@ -136,7 +153,7 @@ class NewDeliveryActivity : AppCompatActivity() {
                 "packageType" to packageClassification,
                 "packageWeightKg" to weightKg,
                 "numberOfPackages" to numPackages,
-                "packageDimensions" to dimensions,
+                "packageDimensions" to "Standard Parcel",
                 "specialHandling" to specialHandling,
                 "deliveryNotes" to specialHandling,
                 // Route Information

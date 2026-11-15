@@ -137,16 +137,17 @@
             </LinearLayout>
         </LinearLayout>
 
-        <!-- Rider Share GPS Button -->
+        <!-- Rider Share GPS Button (Only visible on Rider Dashboard) -->
         <Button
             android:id="@+id/btnShareGpsLocation"
             android:layout_width="match_parent"
             android:layout_height="48dp"
             android:layout_marginTop="12dp"
             android:backgroundTint="#0284C7"
-            android:text="📡 Share My GPS Location (Rider Active)"
+            android:text="📡 Share My GPS Location"
             android:textColor="#FFFFFF"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+            android:visibility="gone" />
 
         <Button
             android:id="@+id/btnViewTracking"

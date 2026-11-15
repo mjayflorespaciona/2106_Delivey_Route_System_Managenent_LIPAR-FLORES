@@ -22,11 +22,12 @@
             android:textStyle="bold" />
 
         <TextView
+            android:id="@+id/tvDeliveriesHeaderTitle"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:gravity="center"
-            android:text="My Deliveries"
+            android:text="My Package Requests"
             android:textColor="#111111"
             android:textSize="18sp"
             android:textStyle="bold" />

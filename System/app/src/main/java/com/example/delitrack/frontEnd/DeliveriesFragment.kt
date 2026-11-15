@@ -65,8 +65,17 @@ class DeliveriesFragment : Fragment() {
         recyclerViewDeliveries = view.findViewById(R.id.recyclerViewDeliveries)
         tvEmptyDeliveries = view.findViewById(R.id.tvEmptyDeliveries)
 
+        val tvHeader = view.findViewById<TextView>(R.id.tvDeliveriesHeaderTitle)
         val isAdmin = activity is AdminDashboardActivity
         val isRider = activity is RiderDashboardActivity
+
+        if (isAdmin) {
+            tvHeader?.text = "All Customer Delivery Orders"
+        } else if (isRider) {
+            tvHeader?.text = "Assigned Delivery Jobs"
+        } else {
+            tvHeader?.text = "My Package Requests"
+        }
 
         recyclerViewDeliveries.layoutManager = LinearLayoutManager(requireContext())
         deliveriesAdapter = DeliveriesAdapter(displayedDeliveries, isAdmin, isRider, { delivery ->
