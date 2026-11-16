@@ -1,4 +1,0 @@
-- [x] Task 1: Update AndroidManifest.xml and activity_splash.xml to use @drawable/app_logo
-- [x] Task 2: Update Customer, Rider, and Admin Dashboard headers to use @drawable/app_logo
-- [x] Task 3: Update Login and Sign-Up screen headers to use @drawable/app_logo
-- [x] Task 4: Run Gradle build and verify logo rendering
