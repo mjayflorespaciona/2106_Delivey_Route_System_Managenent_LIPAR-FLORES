@@ -15,6 +15,7 @@ import androidx.fragment.app.Fragment
 import com.example.delitrack.R
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
 
 class RiderHomeFragment : Fragment() {
 
@@ -31,6 +32,8 @@ class RiderHomeFragment : Fragment() {
 
     private var currentRiderStatus = "Available"
     private var riderId: String = ""
+    private var riderName: String = ""
+    private var deliveriesListener: ListenerRegistration? = null
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -71,10 +74,9 @@ class RiderHomeFragment : Fragment() {
             .get()
             .addOnSuccessListener { doc ->
                 if (!isAdded) return@addOnSuccessListener
-                val name = doc.getString("fullName") ?: "Rider"
-                tvRiderName.text = "Welcome, $name!"
+                riderName = doc.getString("fullName") ?: "Rider"
+                tvRiderName.text = "Welcome, $riderName!"
 
-                // Fetch status from riders collection
                 db.collection("riders")
                     .whereEqualTo("email", email)
                     .get()
@@ -89,16 +91,16 @@ class RiderHomeFragment : Fragment() {
                             currentRiderStatus = "Available"
                             updateRiderStatusBadgeUI(currentRiderStatus)
                         }
-                        loadRiderDeliveriesFromDatabase(email)
+                        startRealTimeRiderDeliveriesListener(email)
                     }
                     .addOnFailureListener {
-                        loadRiderDeliveriesFromDatabase(email)
+                        startRealTimeRiderDeliveriesListener(email)
                     }
             }
             .addOnFailureListener {
                 if (!isAdded) return@addOnFailureListener
                 tvRiderName.text = "Welcome, Rider!"
-                loadRiderDeliveriesFromDatabase(email)
+                startRealTimeRiderDeliveriesListener(email)
             }
     }
 
@@ -146,13 +148,14 @@ class RiderHomeFragment : Fragment() {
         }
     }
 
-    private fun loadRiderDeliveriesFromDatabase(riderEmail: String) {
+    private fun startRealTimeRiderDeliveriesListener(riderEmail: String) {
+        deliveriesListener?.remove()
         val db = FirebaseFirestore.getInstance()
 
-        db.collection("deliveries")
-            .get()
-            .addOnSuccessListener { snapshot ->
-                if (!isAdded) return@addOnSuccessListener
+        // Real-time snapshot listener so when Admin assigns a delivery, it pops up immediately
+        deliveriesListener = db.collection("deliveries")
+            .addSnapshotListener { snapshot, error ->
+                if (!isAdded || error != null || snapshot == null) return@addSnapshotListener
 
                 var assignedCount = 0
                 var pendingCount = 0
@@ -162,23 +165,28 @@ class RiderHomeFragment : Fragment() {
                 containerRiderJobs.removeAllViews()
                 var hasJobs = false
 
-                for (doc in snapshot) {
-                    val data = doc.data
+                for (doc in snapshot.documents) {
+                    val data = doc.data ?: continue
                     val status = data["status"] as? String ?: "Pending"
                     val deliveryId = data["deliveryId"] as? String ?: doc.id
-                    val assignedRider = data["assignedRiderEmail"] as? String ?: data["assignedRiderId"] as? String ?: ""
 
-                    // Riders see only their assigned deliveries (or all if admin testing)
-                    val isAssignedToMe = (riderId.isNotEmpty() && assignedRider.contains(riderId, ignoreCase = true)) ||
-                            (riderEmail.isNotEmpty() && assignedRider.equals(riderEmail, ignoreCase = true)) ||
-                            (riderEmail == "admin@delitrack.com")
+                    val assignedRiderId = data["assignedRiderId"] as? String ?: ""
+                    val assignedRiderName = data["assignedRiderName"] as? String ?: ""
+                    val assignedRiderEmail = data["assignedRiderEmail"] as? String ?: ""
+
+                    // Matching rule: check if order is assigned to this rider or general assigned state
+                    val isAssignedToMe = (riderId.isNotEmpty() && assignedRiderId.contains(riderId, ignoreCase = true)) ||
+                            (riderName.isNotEmpty() && assignedRiderName.contains(riderName, ignoreCase = true)) ||
+                            (riderEmail.isNotEmpty() && assignedRiderEmail.equals(riderEmail, ignoreCase = true)) ||
+                            (riderEmail == "admin@delitrack.com") ||
+                            (assignedRiderId.isNotEmpty() || assignedRiderName.isNotEmpty())
 
                     if (isAssignedToMe) {
                         hasJobs = true
                         assignedCount++
                         when (status.lowercase()) {
                             "pending" -> pendingCount++
-                            "in transit", "dispatched", "active", "assigned to rider", "assigned" -> activeCount++
+                            "in transit", "dispatched", "active", "assigned to rider", "assigned", "acknowledged" -> activeCount++
                             "delivered", "completed", "delivered & confirmed" -> completedCount++
                         }
 
@@ -271,9 +279,6 @@ class RiderHomeFragment : Fragment() {
                     containerRiderJobs.addView(emptyTv)
                 }
             }
-            .addOnFailureListener {
-                // handle failure
-            }
     }
 
     private fun updateJobStatus(deliveryId: String, newStatus: String) {
@@ -283,14 +288,11 @@ class RiderHomeFragment : Fragment() {
             .addOnSuccessListener {
                 if (!isAdded) return@addOnSuccessListener
                 Toast.makeText(requireContext(), "Order $deliveryId marked as $newStatus!", Toast.LENGTH_SHORT).show()
-                val currentUser = FirebaseAuth.getInstance().currentUser
-                loadRiderDeliveriesFromDatabase(currentUser?.email ?: "")
             }
     }
 
-    override fun onResume() {
-        super.onResume()
-        val currentUser = FirebaseAuth.getInstance().currentUser
-        loadRiderDeliveriesFromDatabase(currentUser?.email ?: "")
+    override fun onDestroyView() {
+        super.onDestroyView()
+        deliveriesListener?.remove()
     }
 }

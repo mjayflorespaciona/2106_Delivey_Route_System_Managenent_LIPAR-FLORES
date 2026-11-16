@@ -5,7 +5,6 @@ import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
 import android.widget.RadioButton
-import android.widget.RadioGroup
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
@@ -37,34 +36,11 @@ class NewDeliveryActivity : AppCompatActivity() {
         val senderNameField = findViewById<EditText>(R.id.senderNameField)
         val senderContactField = findViewById<EditText>(R.id.senderContactField)
         val pickupAddressField = findViewById<EditText>(R.id.pickupAddressField)
-        val pickupBarangayField = findViewById<EditText>(R.id.pickupBarangayField)
-        val pickupMunicipalityField = findViewById<EditText>(R.id.pickupMunicipalityField)
-
-        // Auto-fill Sender Name and Sender Contact Number from authenticated Customer profile
-        val currentUser = FirebaseAuth.getInstance().currentUser
-        if (currentUser != null) {
-            FirebaseFirestore.getInstance().collection("users").document(currentUser.uid)
-                .get()
-                .addOnSuccessListener { doc ->
-                    if (!isFinishing && doc != null && doc.exists()) {
-                        val name = doc.getString("fullName") ?: ""
-                        val phone = doc.getString("phone") ?: doc.getString("contactNumber") ?: ""
-                        if (name.isNotEmpty() && senderNameField.text.isEmpty()) {
-                            senderNameField.setText(name)
-                        }
-                        if (phone.isNotEmpty() && senderContactField.text.isEmpty()) {
-                            senderContactField.setText(phone)
-                        }
-                    }
-                }
-        }
 
         // Receiver Fields
         val receiverNameField = findViewById<EditText>(R.id.receiverNameField)
         val receiverContactField = findViewById<EditText>(R.id.receiverContactField)
         val deliveryAddressField = findViewById<EditText>(R.id.deliveryAddressField)
-        val destinationBarangayField = findViewById<EditText>(R.id.destinationBarangayField)
-        val destinationMunicipalityField = findViewById<EditText>(R.id.destinationMunicipalityField)
 
         // Package Fields
         val packageDescField = findViewById<EditText>(R.id.packageDescField)
@@ -77,6 +53,30 @@ class NewDeliveryActivity : AppCompatActivity() {
 
         val btnCreateDelivery = findViewById<Button>(R.id.btnCreateDelivery)
 
+        // Auto-fill Sender Name, Contact, and Pickup Address from Customer profile
+        val currentUser = FirebaseAuth.getInstance().currentUser
+        if (currentUser != null) {
+            FirebaseFirestore.getInstance().collection("users").document(currentUser.uid)
+                .get()
+                .addOnSuccessListener { doc ->
+                    if (!isFinishing && doc != null && doc.exists()) {
+                        val name = doc.getString("fullName") ?: ""
+                        val phone = doc.getString("phone") ?: doc.getString("contactNumber") ?: ""
+                        val addr = doc.getString("address") ?: doc.getString("deliveryAddress") ?: "Nasugbu, Batangas"
+
+                        if (name.isNotEmpty() && senderNameField.text.isEmpty()) {
+                            senderNameField.setText(name)
+                        }
+                        if (phone.isNotEmpty() && senderContactField.text.isEmpty()) {
+                            senderContactField.setText(phone)
+                        }
+                        if (pickupAddressField.text.isEmpty()) {
+                            pickupAddressField.setText(if (addr.contains("Nasugbu")) addr else "$addr, Nasugbu, Batangas")
+                        }
+                    }
+                }
+        }
+
         backBtn.setOnClickListener { finish() }
 
         btnCreateDelivery.setOnClickListener {
@@ -86,15 +86,11 @@ class NewDeliveryActivity : AppCompatActivity() {
             val senderName = senderNameField.text.toString().trim()
             val senderContact = senderContactField.text.toString().trim()
             val pickupAddress = pickupAddressField.text.toString().trim()
-            val pickupBarangay = pickupBarangayField.text.toString().trim()
-            val pickupMunicipality = pickupMunicipalityField.text.toString().trim().ifEmpty { "Nasugbu, Batangas" }
 
             // Extract Receiver Values
             val receiverName = receiverNameField.text.toString().trim()
             val receiverContact = receiverContactField.text.toString().trim()
             val deliveryAddress = deliveryAddressField.text.toString().trim()
-            val destBarangay = destinationBarangayField.text.toString().trim()
-            val destMunicipality = destinationMunicipalityField.text.toString().trim().ifEmpty { "Lian, Batangas" }
 
             // Extract Package Values
             val packageDesc = packageDescField.text.toString().trim()
@@ -108,8 +104,8 @@ class NewDeliveryActivity : AppCompatActivity() {
             val specialHandling = specialHandlingField.text.toString().trim()
 
             // Field Validation
-            if (senderName.isEmpty() || senderContact.isEmpty() || pickupAddress.isEmpty() || pickupBarangay.isEmpty() ||
-                receiverName.isEmpty() || receiverContact.isEmpty() || deliveryAddress.isEmpty() || destBarangay.isEmpty() ||
+            if (senderName.isEmpty() || senderContact.isEmpty() || pickupAddress.isEmpty() ||
+                receiverName.isEmpty() || receiverContact.isEmpty() || deliveryAddress.isEmpty() ||
                 packageDesc.isEmpty() || weightStr.isEmpty()) {
                 Toast.makeText(this, "Please fill in all required fields (*)", Toast.LENGTH_LONG).show()
                 return@setOnClickListener
@@ -123,11 +119,7 @@ class NewDeliveryActivity : AppCompatActivity() {
             btnCreateDelivery.isEnabled = false
 
             val deliveryId = "DLV-${System.currentTimeMillis().toString().takeLast(5)}"
-            val currentUser = FirebaseAuth.getInstance().currentUser
             val db = FirebaseFirestore.getInstance()
-
-            val fullPickupLoc = "$pickupAddress, Brgy. $pickupBarangay, $pickupMunicipality"
-            val fullDestLoc = "$deliveryAddress, Brgy. $destBarangay, $destMunicipality"
 
             val deliveryMap = hashMapOf(
                 "deliveryId" to deliveryId,
@@ -135,17 +127,13 @@ class NewDeliveryActivity : AppCompatActivity() {
                 "senderName" to senderName,
                 "senderContact" to senderContact,
                 "pickupAddress" to pickupAddress,
-                "pickupBarangay" to pickupBarangay,
-                "pickupMunicipality" to pickupMunicipality,
-                "pickupLocation" to fullPickupLoc,
+                "pickupLocation" to pickupAddress,
                 // Receiver Information
                 "receiverName" to receiverName,
                 "receiverContact" to receiverContact,
                 "deliveryAddress" to deliveryAddress,
-                "destinationBarangay" to destBarangay,
-                "destinationMunicipality" to destMunicipality,
-                "destination" to fullDestLoc,
-                // Backward compatibility mapping for admin order views
+                "destination" to deliveryAddress,
+                // Customer Mapping for queries
                 "customerName" to senderName,
                 "contactNumber" to senderContact,
                 // Package Information
@@ -158,7 +146,7 @@ class NewDeliveryActivity : AppCompatActivity() {
                 "deliveryNotes" to specialHandling,
                 // Route Information
                 "routeName" to "Nasugbu - Lian Route",
-                // Functional Requirement: Initial status set to PENDING
+                // Initial status set to PENDING
                 "status" to "Pending",
                 "dateCreated" to "Today",
                 "timestamp" to System.currentTimeMillis(),
