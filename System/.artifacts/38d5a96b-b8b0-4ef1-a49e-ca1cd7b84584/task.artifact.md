@@ -1,6 +1,4 @@
-- [x] Task 1: Update AndroidManifest.xml and create menu XML resources for Admin and Rider portals
-- [x] Task 2: Create AdminDashboardActivity and activity_admin_dashboard.xml
-- [x] Task 3: Create RiderDashboardActivity and activity_rider_dashboard.xml
-- [x] Task 4: Update AdminLoginActivity.kt and CreateAccountActivity.kt for role-based navigation routing
-- [x] Task 5: Add security guards in AssignRiderVehicleActivity.kt and admin screens
-- [x] Task 6: Build project and verify clean compilation and security separation
+- [x] Task 1: Update AndroidManifest.xml and activity_splash.xml to use @drawable/app_logo
+- [x] Task 2: Update Customer, Rider, and Admin Dashboard headers to use @drawable/app_logo
+- [x] Task 3: Update Login and Sign-Up screen headers to use @drawable/app_logo
+- [x] Task 4: Run Gradle build and verify logo rendering

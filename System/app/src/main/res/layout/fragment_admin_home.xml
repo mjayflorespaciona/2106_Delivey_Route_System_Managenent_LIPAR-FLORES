@@ -19,13 +19,11 @@
         android:paddingHorizontal="16dp">
 
         <ImageView
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:background="#0B4F2C"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
             android:contentDescription="Admin Logo"
-            android:padding="4dp"
-            android:src="@android:drawable/ic_menu_manage"
-            app:tint="#FFFFFF" />
+            android:src="@drawable/app_logo"
+            android:scaleType="fitCenter" />
 
         <LinearLayout
             android:layout_width="0dp"

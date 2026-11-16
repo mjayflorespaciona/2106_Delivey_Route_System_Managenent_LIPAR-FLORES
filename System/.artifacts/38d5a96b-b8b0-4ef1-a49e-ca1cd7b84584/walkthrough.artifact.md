@@ -1,21 +1,18 @@
-# DELITRACK Role-Based Security & Portal Separation Walkthrough
+# RoutGo Custom App Logo Integration Walkthrough
 
-Successfully implemented role-based portal separation, navigation routing, and security guards to protect Admin screens from unauthorized Customer or Rider access.
+Successfully integrated `@drawable/app_logo` (`app_logo.png`) across the RoutGo application as the official launcher icon and in-app header branding logo.
 
 ## Changes Made
 
-### Portal Navigation & Layouts
-- **[AdminDashboardActivity.kt](file:///C:/Users/Aron/Desktop/SystemRoute/System/app/src/main/java/com/example/delitrack/frontEnd/AdminDashboardActivity.kt)** & **[activity_admin_dashboard.xml](file:///C:/Users/Aron/Desktop/SystemRoute/System/app/src/main/res/layout/activity_admin_dashboard.xml)**: Created a dedicated Admin Portal featuring navigation tabs for **Orders Dispatch**, **Fleet & Rider Control**, **GIS Route Map**, **Analytics & Reports**, and **Admin Profile**.
-- **[RiderDashboardActivity.kt](file:///C:/Users/Aron/Desktop/SystemRoute/System/app/src/main/java/com/example/delitrack/frontEnd/RiderDashboardActivity.kt)** & **[activity_rider_dashboard.xml](file:///C:/Users/Aron/Desktop/SystemRoute/System/app/src/main/res/layout/activity_rider_dashboard.xml)**: Created a dedicated Rider Portal featuring navigation tabs for **My Jobs**, **Nasugbu-Lian Route Map**, and **Rider Profile**.
-- **[admin_nav_menu.xml](file:///C:/Users/Aron/Desktop/SystemRoute/System/app/src/main/res/menu/admin_nav_menu.xml)** & **[rider_nav_menu.xml](file:///C:/Users/Aron/Desktop/SystemRoute/System/app/src/main/res/menu/rider_nav_menu.xml)**: Added dedicated bottom navigation resource menus.
+### Launcher & Manifest Config
+- **[AndroidManifest.xml](file:///C:/Users/Aron/Desktop/SystemRoute/System/app/src/main/AndroidManifest.xml)**: Configured `android:icon="@drawable/app_logo"` and `android:roundIcon="@drawable/app_logo"`.
 
-### Login Routing & Security Guards
-- **[AdminLoginActivity.kt](file:///C:/Users/Aron/Desktop/SystemRoute/System/app/src/main/java/com/example/delitrack/frontEnd/AdminLoginActivity.kt)**: Configured role-based login redirection:
-  - `Customer` ➔ `DashboardActivity` (Customer Dashboard)
-  - `Rider` ➔ `RiderDashboardActivity` (Rider Portal)
-  - `Admin` ➔ `AdminDashboardActivity` (Admin Portal)
-- **[CreateAccountActivity.kt](file:///C:/Users/Aron/Desktop/SystemRoute/System/app/src/main/java/com/example/delitrack/frontEnd/CreateAccountActivity.kt)**: Configured post-registration routing so Customers and Riders land on their respective portals.
-- **[AssignRiderVehicleActivity.kt](file:///C:/Users/Aron/Desktop/SystemRoute/System/app/src/main/java/com/example/delitrack/frontEnd/AssignRiderVehicleActivity.kt)**: Added an Admin Security Guard to verify `role == "Admin"` before allowing access. Unauthorized attempts trigger an "Access Denied" notice and finish the activity.
+### Layout XML Integration
+- **[activity_splash.xml](file:///C:/Users/Aron/Desktop/SystemRoute/System/app/src/main/res/layout/activity_splash.xml)**: Updated splash screen logo image to `@drawable/app_logo`.
+- **[fragment_home.xml](file:///C:/Users/Aron/Desktop/SystemRoute/System/app/src/main/res/layout/fragment_home.xml)**: Updated Customer Dashboard header logo to `@drawable/app_logo`.
+- **[fragment_rider_home.xml](file:///C:/Users/Aron/Desktop/SystemRoute/System/app/src/main/res/layout/fragment_rider_home.xml)**: Updated Rider Dashboard header logo to `@drawable/app_logo`.
+- **[fragment_admin_home.xml](file:///C:/Users/Aron/Desktop/SystemRoute/System/app/src/main/res/layout/fragment_admin_home.xml)**: Updated Admin Dashboard header logo to `@drawable/app_logo`.
+- **[activity_admin_login.xml](file:///C:/Users/Aron/Desktop/SystemRoute/System/app/src/main/res/layout/activity_admin_login.xml)** & **[activity_create_account.xml](file:///C:/Users/Aron/Desktop/SystemRoute/System/app/src/main/res/layout/activity_create_account.xml)**: Updated sign-in and sign-up header icons to `@drawable/app_logo`.
 
 ## Verification Results
 
