@@ -9,6 +9,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
 import com.example.delitrack.R
+import com.example.delitrack.frontEnd.rider.RiderDeliveriesFragment
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -39,7 +40,7 @@ class RiderDashboardActivity : AppCompatActivity() {
                     true
                 }
                 R.id.nav_rider_assigned -> {
-                    replaceFragment(DeliveriesFragment())
+                    replaceFragment(RiderDeliveriesFragment())
                     true
                 }
                 R.id.nav_rider_route -> {
@@ -47,7 +48,7 @@ class RiderDashboardActivity : AppCompatActivity() {
                     true
                 }
                 R.id.nav_rider_history -> {
-                    replaceFragment(DeliveriesFragment())
+                    replaceFragment(com.example.delitrack.frontEnd.rider.RiderDeliveriesFragment())
                     true
                 }
                 R.id.nav_rider_profile -> {

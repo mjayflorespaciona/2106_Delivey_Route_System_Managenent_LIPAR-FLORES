@@ -11,6 +11,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.example.delitrack.R
+import com.example.delitrack.backEnd.data.MapTilerConfig
 import com.google.firebase.firestore.FirebaseFirestore
 import org.osmdroid.config.Configuration
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
@@ -48,7 +49,8 @@ class SelectRouteActivity : AppCompatActivity() {
         tvDestinationText = findViewById(R.id.tvDestinationText)
 
         mapView = findViewById(R.id.mapView)
-        mapView.setTileSource(TileSourceFactory.MAPNIK)
+        mapView = findViewById(R.id.mapView)
+        mapView.setTileSource(MapTilerConfig.getDefaultOpenStreetMapSource())
         mapView.setMultiTouchControls(true)
 
         val deliveryId = intent.getStringExtra("deliveryId")

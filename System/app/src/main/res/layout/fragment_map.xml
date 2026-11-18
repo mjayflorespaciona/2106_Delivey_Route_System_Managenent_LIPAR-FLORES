@@ -60,19 +60,39 @@
             android:id="@+id/btnSearchMapTracking"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
-            android:layout_marginStart="8dp"
+            android:layout_marginStart="6dp"
             android:backgroundTint="#0B4F2C"
             android:text="Locate"
             android:textColor="#FFFFFF"
             android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/btnToggleMapStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_marginStart="6dp"
+            android:backgroundTint="#0284C7"
+            android:text="Style"
+            android:textColor="#FFFFFF"
+            android:textSize="11sp"
+            android:textStyle="bold" />
     </LinearLayout>
 
-    <!-- OpenStreetMap View -->
+    <!-- Leaflet.js GIS Web Map View -->
+    <WebView
+        android:id="@+id/leafletWebView"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:visibility="visible" />
+
+    <!-- OpenStreetMap Native View -->
     <org.osmdroid.views.MapView
         android:id="@+id/mapView"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1" />
+        android:layout_weight="1"
+        android:visibility="gone" />
 
     <!-- Bottom Action & GPS Sharing Panel -->
     <LinearLayout

@@ -9,6 +9,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
 import com.example.delitrack.R
+import com.example.delitrack.frontEnd.admin.AdminDeliveriesFragment
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -40,7 +41,7 @@ class AdminDashboardActivity : AppCompatActivity() {
                     true
                 }
                 R.id.nav_admin_deliveries -> {
-                    replaceFragment(DeliveriesFragment())
+                    replaceFragment(AdminDeliveriesFragment())
                     true
                 }
                 R.id.nav_admin_assignments -> {

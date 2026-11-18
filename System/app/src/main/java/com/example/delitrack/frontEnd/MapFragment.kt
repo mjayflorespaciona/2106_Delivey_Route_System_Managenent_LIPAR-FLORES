@@ -1,6 +1,7 @@
 package com.example.delitrack.frontEnd
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -11,6 +12,8 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.webkit.WebChromeClient
+import android.webkit.WebView
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
@@ -20,6 +23,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import com.example.delitrack.R
+import com.example.delitrack.backEnd.data.MapTilerConfig
 import com.google.firebase.firestore.FirebaseFirestore
 import org.osmdroid.config.Configuration
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
@@ -34,6 +38,7 @@ import java.util.Locale
 class MapFragment : Fragment() {
 
     private lateinit var mapView: MapView
+    private lateinit var leafletWebView: WebView
     private lateinit var searchDeliveryIdField: EditText
     private lateinit var tvGpsStatusBadge: TextView
     private lateinit var tvLastGpsUpdate: TextView
@@ -51,24 +56,51 @@ class MapFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        Configuration.getInstance().load(
-            requireContext().applicationContext,
-            requireContext().getSharedPreferences("osmdroid", Context.MODE_PRIVATE)
-        )
+        val ctx = requireContext().applicationContext
+        Configuration.getInstance().load(ctx, ctx.getSharedPreferences("osmdroid", Context.MODE_PRIVATE))
+        Configuration.getInstance().userAgentValue = requireContext().packageName
+
         return inflater.inflate(R.layout.fragment_map, container, false)
     }
 
+    @SuppressLint("SetJavaScriptEnabled")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
         mapView = view.findViewById(R.id.mapView)
+        leafletWebView = view.findViewById(R.id.leafletWebView)
         searchDeliveryIdField = view.findViewById(R.id.searchDeliveryIdField)
         tvGpsStatusBadge = view.findViewById(R.id.tvGpsStatusBadge)
         tvLastGpsUpdate = view.findViewById(R.id.tvLastGpsUpdate)
         btnShareGpsLocation = view.findViewById(R.id.btnShareGpsLocation)
 
+        // Initialize Leaflet.js Engine in WebView
+        leafletWebView.visibility = View.VISIBLE
+        mapView.visibility = View.GONE
+
+        leafletWebView.settings.javaScriptEnabled = true
+        leafletWebView.settings.domStorageEnabled = true
+        leafletWebView.webChromeClient = WebChromeClient()
+        leafletWebView.loadUrl("file:///android_asset/leaflet_map.html")
+
         mapView.setTileSource(TileSourceFactory.MAPNIK)
         mapView.setMultiTouchControls(true)
+
+        var isMapTilerStyle = false
+        val btnToggleMapStyle = view.findViewById<Button>(R.id.btnToggleMapStyle)
+        btnToggleMapStyle?.setOnClickListener {
+            isMapTilerStyle = !isMapTilerStyle
+            if (isMapTilerStyle) {
+                mapView.setTileSource(MapTilerConfig.getMapTilerTileSource())
+                btnToggleMapStyle.text = "OSM"
+                Toast.makeText(requireContext(), "GIS Engine: MapTiler Streets Active", Toast.LENGTH_SHORT).show()
+            } else {
+                mapView.setTileSource(MapTilerConfig.getDefaultOpenStreetMapSource())
+                btnToggleMapStyle.text = "Style"
+                Toast.makeText(requireContext(), "GIS Engine: OpenStreetMap Standard Active", Toast.LENGTH_SHORT).show()
+            }
+            mapView.invalidate()
+        }
 
         // Show Share GPS Location button ONLY when viewed on Rider Dashboard
         if (activity is RiderDashboardActivity) {
@@ -169,6 +201,12 @@ class MapFragment : Fragment() {
                         }
                     }
                     mapView.overlays.add(deliveryMarker)
+
+                    // Also evaluate JavaScript call to Leaflet.js engine
+                    leafletWebView.evaluateJavascript(
+                        "addDeliveryMarker('$deliveryId', '$status', $deliveryLat, $deliveryLng, '<b>$deliveryId</b><br>Receiver: $receiver');",
+                        null
+                    )
                 }
                 mapView.invalidate()
             }
@@ -284,6 +322,12 @@ class MapFragment : Fragment() {
                             }
                             riderGpsMarker?.position = GeoPoint(actualLat, actualLng)
                             mapView.invalidate()
+
+                            // Also evaluate Leaflet GPS update
+                            leafletWebView.evaluateJavascript(
+                                "updateRiderGpsLocation($actualLat, $actualLng, '$gpsLocString');",
+                                null
+                            )
 
                             Toast.makeText(requireContext(), "GPS Location Shared: $gpsLocString at $formattedTime", Toast.LENGTH_LONG).show()
                         }

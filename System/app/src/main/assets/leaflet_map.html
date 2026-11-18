@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>RoutGo Leaflet GIS Map</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        html, body, #map {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f7f6;
+        }
+        .leaflet-popup-content-wrapper {
+            border-radius: 8px;
+            font-family: sans-serif;
+            padding: 6px;
+        }
+        .popup-title {
+            font-weight: bold;
+            color: #0B4F2C;
+            font-size: 14px;
+            margin-bottom: 2px;
+        }
+        .popup-subtitle {
+            font-size: 12px;
+            color: #555555;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        var map = null;
+        var riderMarker = null;
+        var deliveryMarkers = {};
+
+        function initRouteMap(nasugbuLat, nasugbuLng, lianLat, lianLng) {
+            var nasugbu = [nasugbuLat || 14.0754, nasugbuLng || 120.6311];
+            var lian = [lianLat || 14.0384, lianLng || 120.6508];
+            var center = [(nasugbu[0] + lian[0]) / 2, (nasugbu[1] + lian[1]) / 2];
+
+            if (!map) {
+                map = L.map('map').setView(center, 12);
+                L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 19,
+                    attribution: '&copy; OpenStreetMap contributors | RoutGo'
+                }).addTo(map);
+            } else {
+                map.setView(center, 12);
+            }
+
+            // 1. Pickup Marker (Nasugbu, Batangas)
+            L.marker(nasugbu).addTo(map)
+                .bindPopup('<div class="popup-title">📍 Pickup Terminal</div><div class="popup-subtitle">Nasugbu, Batangas</div>');
+
+            // 2. Destination Marker (Lian, Batangas)
+            L.marker(lian).addTo(map)
+                .bindPopup('<div class="popup-title">🏁 Destination Terminal</div><div class="popup-subtitle">Lian, Batangas</div>');
+
+            // 3. Nasugbu to Lian Polyline Route
+            var routeWaypoints = [
+                nasugbu,
+                [14.0650, 120.6350],
+                [14.0620, 120.6380],
+                [14.0500, 120.6430],
+                lian
+            ];
+            L.polyline(routeWaypoints, { color: '#0B4F2C', weight: 6, opacity: 0.85 }).addTo(map);
+        }
+
+        function addDeliveryMarker(id, status, lat, lng, popupHtml) {
+            if (!map) return;
+            var pos = [lat, lng];
+            if (deliveryMarkers[id]) {
+                deliveryMarkers[id].setLatLng(pos);
+            } else {
+                var marker = L.marker(pos).addTo(map);
+                marker.bindPopup(popupHtml || ('<div class="popup-title">' + id + '</div><div class="popup-subtitle">Status: ' + status + '</div>'));
+                deliveryMarkers[id] = marker;
+            }
+        }
+
+        function updateRiderGpsLocation(lat, lng, label) {
+            if (!map) return;
+            var pos = [lat, lng];
+            if (!riderMarker) {
+                riderMarker = L.marker(pos).addTo(map);
+                riderMarker.bindPopup('<div class="popup-title">📡 Rider Active GPS</div><div class="popup-subtitle">' + (label || '') + '</div>');
+            } else {
+                riderMarker.setLatLng(pos);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            initRouteMap(14.0754, 120.6311, 14.0384, 120.6508);
+        });
+    </script>
+</body>
+</html>

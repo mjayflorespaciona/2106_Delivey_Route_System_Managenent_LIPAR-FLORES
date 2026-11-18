@@ -8,6 +8,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
 import com.example.delitrack.R
+import com.example.delitrack.frontEnd.customer.CustomerDeliveriesFragment
 import com.google.android.material.bottomnavigation.BottomNavigationView
 
 class DashboardActivity : AppCompatActivity() {
@@ -30,7 +31,7 @@ class DashboardActivity : AppCompatActivity() {
         bottomNavigation.setOnItemSelectedListener { item ->
             val fragment: Fragment = when (item.itemId) {
                 R.id.nav_home -> HomeFragment()
-                R.id.nav_deliveries -> DeliveriesFragment()
+                R.id.nav_deliveries -> CustomerDeliveriesFragment()
                 R.id.nav_map -> MapFragment()
                 R.id.nav_more -> MoreFragment()
                 else -> HomeFragment()

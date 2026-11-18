@@ -1,0 +1,6 @@
+- [x] Task 1: Create dedicated item card XML layouts for Customer, Rider, and Admin views
+- [x] Task 2: Create role-separated Customer fragments and classes
+- [x] Task 3: Create role-separated Rider fragments and classes
+- [x] Task 4: Create role-separated Admin fragments and classes
+- [x] Task 5: Update RiderDashboardActivity and AdminDashboardActivity navigation
+- [x] Task 6: Run Gradle build and verify clean compilation
