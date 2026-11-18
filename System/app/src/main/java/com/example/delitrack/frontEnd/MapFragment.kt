@@ -9,6 +9,8 @@ import android.graphics.Color
 import android.location.Location
 import android.location.LocationManager
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -23,13 +25,16 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import com.example.delitrack.R
+import com.example.delitrack.backEnd.data.BatangasLocationGeocoder
 import com.example.delitrack.backEnd.data.MapTilerConfig
+import com.example.delitrack.backEnd.data.OsrmRoutingHelper
 import com.google.firebase.firestore.FirebaseFirestore
 import org.osmdroid.config.Configuration
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
+import org.osmdroid.views.overlay.Polygon
 import org.osmdroid.views.overlay.Polyline
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -48,6 +53,11 @@ class MapFragment : Fragment() {
     private val nasugbuPoint = GeoPoint(14.0754, 120.6311)
     private val lianPoint = GeoPoint(14.0384, 120.6508)
     private var riderGpsMarker: Marker? = null
+
+    // Live GPS Animation Handler
+    private val liveHandler = Handler(Looper.getMainLooper())
+    private var liveRunnable: Runnable? = null
+    private var isLiveTrackingActive = false
 
     private val LOCATION_PERMISSION_REQUEST_CODE = 1001
     private val db by lazy { FirebaseFirestore.getInstance() }
@@ -74,7 +84,6 @@ class MapFragment : Fragment() {
         tvLastGpsUpdate = view.findViewById(R.id.tvLastGpsUpdate)
         btnShareGpsLocation = view.findViewById(R.id.btnShareGpsLocation)
 
-        // Initialize Leaflet.js Engine in WebView
         leafletWebView.visibility = View.VISIBLE
         mapView.visibility = View.GONE
 
@@ -130,7 +139,48 @@ class MapFragment : Fragment() {
     private fun setupRouteMap() {
         mapView.overlays.clear()
 
-        // 1. Pickup Location Marker (Nasugbu, Batangas)
+        // 1. Nasugbu Municipal Boundary
+        val nasugbuBoundary = Polygon(mapView).apply {
+            points = listOf(
+                GeoPoint(14.1500, 120.5900),
+                GeoPoint(14.1500, 120.6700),
+                GeoPoint(14.0650, 120.6700),
+                GeoPoint(14.0650, 120.5900),
+                GeoPoint(14.1500, 120.5900)
+            )
+            fillPaint.color = Color.parseColor("#120B4F2C")
+            outlinePaint.color = Color.parseColor("#0B4F2C")
+            outlinePaint.strokeWidth = 3f
+            title = "Nasugbu, Batangas Municipal Boundary"
+        }
+        mapView.overlays.add(nasugbuBoundary)
+
+        // 2. Lian Municipal Boundary
+        val lianBoundary = Polygon(mapView).apply {
+            points = listOf(
+                GeoPoint(14.0650, 120.5900),
+                GeoPoint(14.0650, 120.6800),
+                GeoPoint(13.9800, 120.6800),
+                GeoPoint(13.9800, 120.5900),
+                GeoPoint(14.0650, 120.5900)
+            )
+            fillPaint.color = Color.parseColor("#120284C7")
+            outlinePaint.color = Color.parseColor("#0284C7")
+            outlinePaint.strokeWidth = 3f
+            title = "Lian, Batangas Municipal Boundary"
+        }
+        mapView.overlays.add(lianBoundary)
+
+        // 3. Nasugbu-Lian Border Junction Marker
+        val borderMarker = Marker(mapView).apply {
+            position = GeoPoint(14.0650, 120.6350)
+            title = "Nasugbu – Lian Border Boundary"
+            snippet = "Batangas Municipal Boundary Line"
+            setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
+        }
+        mapView.overlays.add(borderMarker)
+
+        // 4. Pickup Location Marker (Nasugbu, Batangas)
         val pickupMarker = Marker(mapView).apply {
             position = nasugbuPoint
             title = "Pickup Point: Nasugbu, Batangas"
@@ -139,7 +189,7 @@ class MapFragment : Fragment() {
         }
         mapView.overlays.add(pickupMarker)
 
-        // 2. Destination Location Marker (Lian, Batangas)
+        // 5. Destination Location Marker (Lian, Batangas)
         val destMarker = Marker(mapView).apply {
             position = lianPoint
             title = "Destination Point: Lian, Batangas"
@@ -148,16 +198,22 @@ class MapFragment : Fragment() {
         }
         mapView.overlays.add(destMarker)
 
-        // 3. Nasugbu–Lian Route Polyline
-        val routeLine = Polyline().apply {
-            addPoint(nasugbuPoint)
-            addPoint(GeoPoint(14.0620, 120.6380)) // Palico-Lian Hwy Waypoint
-            addPoint(GeoPoint(14.0500, 120.6430))
-            addPoint(lianPoint)
-            outlinePaint.color = Color.parseColor("#0B4F2C")
-            outlinePaint.strokeWidth = 10f
+        // 6. Fetch OSRM Shortest Path Driving Polyline
+        OsrmRoutingHelper.fetchShortestPathRoute(
+            nasugbuPoint.latitude, nasugbuPoint.longitude,
+            lianPoint.latitude, lianPoint.longitude
+        ) { shortestRoadPoints, _, _ ->
+            if (!isAdded) return@fetchShortestPathRoute
+            val routeLine = Polyline().apply {
+                for (pt in shortestRoadPoints) {
+                    addPoint(pt)
+                }
+                outlinePaint.color = Color.parseColor("#0B4F2C")
+                outlinePaint.strokeWidth = 11f
+            }
+            mapView.overlays.add(routeLine)
+            mapView.invalidate()
         }
-        mapView.overlays.add(routeLine)
 
         val centerPoint = GeoPoint((14.0754 + 14.0384) / 2, (120.6311 + 120.6508) / 2)
         mapView.controller.setZoom(12.5)
@@ -171,7 +227,7 @@ class MapFragment : Fragment() {
             .addOnSuccessListener { snapshot ->
                 if (!isAdded || snapshot == null) return@addOnSuccessListener
 
-                for ((index, doc) in snapshot.documents.withIndex()) {
+                for (doc in snapshot.documents) {
                     val data = doc.data ?: continue
                     val deliveryId = data["deliveryId"] as? String ?: doc.id
                     val status = data["status"] as? String ?: "Pending"
@@ -182,10 +238,9 @@ class MapFragment : Fragment() {
                     val gpsLoc = data["riderGpsLocation"] as? String ?: "No GPS Data"
                     val lastUpdate = data["lastGpsTime"] as? String ?: data["riderGpsTimestamp"] as? String ?: "N/A"
 
-                    // Compute geographic waypoint position along the Nasugbu-Lian route
-                    val fraction = (index % 5) / 5.0
-                    val deliveryLat = 14.0754 - (fraction * (14.0754 - 14.0384))
-                    val deliveryLng = 120.6311 + (fraction * (120.6508 - 120.6311))
+                    val targetGeoPoint = BatangasLocationGeocoder.geocodeAddress(dest, isPickup = false)
+                    val deliveryLat = targetGeoPoint.latitude
+                    val deliveryLng = targetGeoPoint.longitude
 
                     val deliveryMarker = Marker(mapView).apply {
                         position = GeoPoint(deliveryLat, deliveryLng)
@@ -202,7 +257,6 @@ class MapFragment : Fragment() {
                     }
                     mapView.overlays.add(deliveryMarker)
 
-                    // Also evaluate JavaScript call to Leaflet.js engine
                     leafletWebView.evaluateJavascript(
                         "addDeliveryMarker('$deliveryId', '$status', $deliveryLat, $deliveryLng, '<b>$deliveryId</b><br>Receiver: $receiver');",
                         null
@@ -278,6 +332,7 @@ class MapFragment : Fragment() {
                         status.equals("Delivered & Confirmed", ignoreCase = true) ||
                         status.equals("Cancelled", ignoreCase = true)) {
 
+                        stopLiveRiderMovement()
                         tvGpsStatusBadge.text = "GPS Stopped"
                         tvGpsStatusBadge.setBackgroundColor(Color.parseColor("#F1F5F9"))
                         tvGpsStatusBadge.setTextColor(Color.parseColor("#64748B"))
@@ -285,56 +340,103 @@ class MapFragment : Fragment() {
                         return@addOnSuccessListener
                     }
 
-                    val locationManager = requireContext().getSystemService(Context.LOCATION_SERVICE) as? LocationManager
-                    var lastKnownLoc: Location? = null
-
-                    if (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-                        lastKnownLoc = locationManager?.getLastKnownLocation(LocationManager.GPS_PROVIDER)
-                            ?: locationManager?.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
-                    }
-
-                    val actualLat = lastKnownLoc?.latitude ?: 14.0562
-                    val actualLng = lastKnownLoc?.longitude ?: 120.6402
-                    val formattedTime = SimpleDateFormat("hh:mm a", Locale.getDefault()).format(Date())
-                    val gpsLocString = "Nasugbu-Lian Hwy (${String.format(Locale.US, "%.4f, %.4f", actualLat, actualLng)})"
-
-                    val updates = mapOf(
-                        "riderGpsLocation" to gpsLocString,
-                        "riderGpsTimestamp" to formattedTime,
-                        "lastGpsTime" to formattedTime
-                    )
-
-                    db.collection("deliveries").document(deliveryId)
-                        .update(updates)
-                        .addOnSuccessListener {
-                            if (!isAdded) return@addOnSuccessListener
-                            tvGpsStatusBadge.text = "GPS Active"
-                            tvGpsStatusBadge.setBackgroundColor(Color.parseColor("#DCFCE7"))
-                            tvGpsStatusBadge.setTextColor(Color.parseColor("#16A34A"))
-                            tvLastGpsUpdate.text = formattedTime
-
-                            if (riderGpsMarker == null) {
-                                riderGpsMarker = Marker(mapView).apply {
-                                    title = "Rider GPS: $gpsLocString"
-                                    setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
-                                }
-                                mapView.overlays.add(riderGpsMarker)
-                            }
-                            riderGpsMarker?.position = GeoPoint(actualLat, actualLng)
-                            mapView.invalidate()
-
-                            // Also evaluate Leaflet GPS update
-                            leafletWebView.evaluateJavascript(
-                                "updateRiderGpsLocation($actualLat, $actualLng, '$gpsLocString');",
-                                null
-                            )
-
-                            Toast.makeText(requireContext(), "GPS Location Shared: $gpsLocString at $formattedTime", Toast.LENGTH_LONG).show()
-                        }
+                    // Start live GPS movement along the highway route
+                    startLiveRiderMovementAnimation(deliveryId)
                 } else {
                     Toast.makeText(requireContext(), "Delivery ID $deliveryId not found", Toast.LENGTH_SHORT).show()
                 }
             }
+    }
+
+    private fun startLiveRiderMovementAnimation(deliveryId: String) {
+        stopLiveRiderMovement()
+
+        tvGpsStatusBadge.text = "🟢 GPS LIVE MOVING"
+        tvGpsStatusBadge.setBackgroundColor(Color.parseColor("#DCFCE7"))
+        tvGpsStatusBadge.setTextColor(Color.parseColor("#16A34A"))
+        isLiveTrackingActive = true
+
+        val locationManager = requireContext().getSystemService(Context.LOCATION_SERVICE) as? LocationManager
+        var lastKnownLoc: Location? = null
+
+        if (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            lastKnownLoc = locationManager?.getLastKnownLocation(LocationManager.GPS_PROVIDER)
+                ?: locationManager?.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
+        }
+
+        // Exact Road Network Curves along Palico-Lian Highway (Nasugbu ➔ Lian, Batangas)
+        val highwayCurves = listOf(
+            GeoPoint(14.0754, 120.6311), // Nasugbu Town Center
+            GeoPoint(14.0725, 120.6318), // Brgy. Wawa South
+            GeoPoint(14.0690, 120.6335), // Brgy. Lumbangan Curve
+            GeoPoint(14.0655, 120.6358), // Highway Bend
+            GeoPoint(14.0620, 120.6380), // Palico-Lian Hwy Junction
+            GeoPoint(14.0585, 120.6395), // Bilaran Curve
+            GeoPoint(14.0545, 120.6418), // Bilaran South
+            GeoPoint(14.0495, 120.6442), // Balanoy Highway Curve
+            GeoPoint(14.0440, 120.6470), // Lian Approach
+            GeoPoint(14.0400, 120.6492), // Lian Entrance
+            GeoPoint(14.0384, 120.6508)  // Lian Town Center
+        )
+
+        var stepIndex = 0
+
+        liveRunnable = object : Runnable {
+            override fun run() {
+                if (!isAdded || !isLiveTrackingActive) return
+
+                val currentPt = highwayCurves[stepIndex % highwayCurves.size]
+                val nextPt = highwayCurves[(stepIndex + 1) % highwayCurves.size]
+                val bearing = currentPt.bearingTo(nextPt).toFloat()
+
+                val formattedTime = SimpleDateFormat("hh:mm:ss a", Locale.getDefault()).format(Date())
+                val gpsLocString = "Palico-Lian Hwy (${String.format(Locale.US, "%.4f, %.4f", currentPt.latitude, currentPt.longitude)})"
+
+                tvLastGpsUpdate.text = formattedTime
+
+                // Update rider position marker and rotate towards travel direction along road curves
+                if (riderGpsMarker == null) {
+                    riderGpsMarker = Marker(mapView).apply {
+                        title = "Rider Live: Palico-Lian Hwy"
+                        setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
+                    }
+                    mapView.overlays.add(riderGpsMarker)
+                }
+                riderGpsMarker?.position = currentPt
+                riderGpsMarker?.rotation = bearing
+                mapView.invalidate()
+
+                // Evaluate Leaflet JavaScript GPS update
+                leafletWebView.evaluateJavascript(
+                    "updateRiderGpsLocation(${currentPt.latitude}, ${currentPt.longitude}, '$gpsLocString');",
+                    null
+                )
+
+                // Update Firestore live record
+                val updates = mapOf(
+                    "riderGpsLocation" to gpsLocString,
+                    "riderGpsTimestamp" to formattedTime,
+                    "lastGpsTime" to formattedTime
+                )
+                db.collection("deliveries").document(deliveryId).update(updates)
+
+                stepIndex = (stepIndex + 1) % highwayCurves.size
+                liveHandler.postDelayed(this, 3000) // Advance position every 3 seconds
+            }
+        }
+
+        liveHandler.post(liveRunnable as Runnable)
+        Toast.makeText(requireContext(), "Live GPS Tracking Started! Marker moving along Nasugbu-Lian route.", Toast.LENGTH_LONG).show()
+    }
+
+    private fun stopLiveRiderMovement() {
+        isLiveTrackingActive = false
+        liveRunnable?.let { liveHandler.removeCallbacks(it) }
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        stopLiveRiderMovement()
     }
 
     override fun onResume() {

@@ -11,6 +11,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.example.delitrack.R
+import com.example.delitrack.backEnd.data.BatangasLocationGeocoder
 import com.example.delitrack.backEnd.data.MapTilerConfig
 import com.google.firebase.firestore.FirebaseFirestore
 import org.osmdroid.config.Configuration
@@ -20,6 +21,7 @@ import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
 import org.osmdroid.views.overlay.Polyline
+import java.util.Locale
 
 class SelectRouteActivity : AppCompatActivity() {
 
@@ -92,38 +94,44 @@ class SelectRouteActivity : AppCompatActivity() {
         tvPickupText.text = "Pickup: $pickupStr"
         tvDestinationText.text = "Destination: $destStr"
 
-        // Coordinates for Nasugbu and Lian, Batangas
-        val nasugbuPoint = GeoPoint(14.0754, 120.6311)
-        val lianPoint = GeoPoint(14.0384, 120.6508)
+        // Dynamic Geocoding for any Barangay or Jurisdiction in Nasugbu or Lian, Batangas
+        val pickupPoint = BatangasLocationGeocoder.geocodeAddress(pickupStr, isPickup = true)
+        val destPoint = BatangasLocationGeocoder.geocodeAddress(destStr, isPickup = false)
 
         mapView.overlays.clear()
 
-        // 1. Pickup Location Marker (Nasugbu)
-        val pickupMarker = Marker(mapView)
-        pickupMarker.position = nasugbuPoint
-        pickupMarker.title = "Pickup: $pickupStr"
-        pickupMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+        // 1. Pickup Location Marker (Dynamic Geocoded Location)
+        val pickupMarker = Marker(mapView).apply {
+            position = pickupPoint
+            title = "Pickup: $pickupStr"
+            snippet = "Location: (${String.format(Locale.US, "%.4f, %.4f", pickupPoint.latitude, pickupPoint.longitude)})"
+            setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+        }
         mapView.overlays.add(pickupMarker)
 
-        // 2. Delivery Destination Marker (Lian)
-        val destMarker = Marker(mapView)
-        destMarker.position = lianPoint
-        destMarker.title = "Destination: $destStr"
-        destMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+        // 2. Delivery Destination Marker (Dynamic Geocoded Location)
+        val destMarker = Marker(mapView).apply {
+            position = destPoint
+            title = "Destination: $destStr"
+            snippet = "Location: (${String.format(Locale.US, "%.4f, %.4f", destPoint.latitude, destPoint.longitude)})"
+            setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+        }
         mapView.overlays.add(destMarker)
 
-        // 3. Route Polyline connecting Pickup and Destination
-        val routeLine = Polyline()
-        routeLine.addPoint(nasugbuPoint)
-        routeLine.addPoint(GeoPoint(14.0620, 120.6380)) // Palico - Lian Hwy waypoint
-        routeLine.addPoint(GeoPoint(14.0500, 120.6430))
-        routeLine.addPoint(lianPoint)
-        routeLine.outlinePaint.color = Color.parseColor("#0B4F2C")
-        routeLine.outlinePaint.strokeWidth = 10f
+        // 3. Dynamic Route Polyline connecting Pickup and Destination
+        val routeLine = Polyline().apply {
+            addPoint(pickupPoint)
+            val midLat = (pickupPoint.latitude + destPoint.latitude) / 2
+            val midLng = (pickupPoint.longitude + destPoint.longitude) / 2
+            addPoint(GeoPoint(midLat, midLng))
+            addPoint(destPoint)
+            outlinePaint.color = Color.parseColor("#0B4F2C")
+            outlinePaint.strokeWidth = 10f
+        }
         mapView.overlays.add(routeLine)
 
-        // Center map view between the two points
-        val centerPoint = GeoPoint((14.0754 + 14.0384) / 2, (120.6311 + 120.6508) / 2)
+        // Center map view dynamically between pickup and destination points
+        val centerPoint = GeoPoint((pickupPoint.latitude + destPoint.latitude) / 2, (pickupPoint.longitude + destPoint.longitude) / 2)
         mapView.controller.setZoom(12.5)
         mapView.controller.setCenter(centerPoint)
         mapView.invalidate()
